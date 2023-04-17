@@ -1,0 +1,126 @@
+from sklearn.mixture import BayesianGaussianMixture
+import numpy as np
+from sklearn.mixture import GaussianMixture
+import pandas as pd
+
+
+# Set the random seed for reproducibility
+np.random.seed(42)
+
+# Generate a 2D dataset with 4 clusters
+n_samples = 500
+centers = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
+X = []
+for center in centers:
+    x = np.random.randn(n_samples, 2) + center
+    X.append(x)
+X = np.concatenate(X, axis=0)
+
+'''
+# Set seed for reproducibility
+np.random.seed(123)
+
+# Generate random data with 3 clusters and 2 features
+n_samples = 1000
+n_clusters = 4
+n_features = 3
+X = np.zeros((n_samples, n_features))
+
+# Generate means and variances for each cluster
+means = np.random.uniform(-5, 5, size=(n_clusters, n_features))
+variances = np.random.uniform(0.1, 1, size=(n_clusters, n_features))
+
+# Assign data to clusters
+cluster_assignments = np.random.choice(n_clusters, size=n_samples)
+for k in range(n_clusters):
+    X[cluster_assignments == k, :] = np.random.normal(
+        loc=means[k], scale=variances[k], size=(sum(cluster_assignments == k), n_features))
+
+# Save data to CSV file
+data = pd.DataFrame(X, columns=[f"Feature_{i+1}" for i in range(n_features)])
+X=data'''
+def autoclass(X):
+    min_components = 2
+    max_components = 10
+
+    # Initialize empty lists to store the BIC values and the models
+    bic_values = []
+    models = []
+
+    # Loop over the range of cluster numbers and fit a model for each
+    for n_components in range(min_components, max_components+1):
+        
+        model = BayesianGaussianMixture(n_components=n_components, max_iter=1000, n_init=1, weight_concentration_prior=1e-3, random_state=42)
+        model.fit(X)
+        models.append(model)
+        log_likelihood = model.score(X)
+        n_parameters = n_components * (X.shape[1] + 1)
+        n_samples = X.shape[0]
+        bic = -2 * log_likelihood + n_parameters * np.log(n_samples)
+        bic_values.append(bic)
+
+    # Find the optimal number of clusters based on the BIC values
+    K = np.argmin(bic_values) + min_components
+    return K
+
+
+
+
+'''
+def autoclass(X, max_clusters=10):
+    """
+    Fits an AutoClass model to the input data X.
+
+    Parameters:
+    -----------
+    X : ndarray
+        The input data, with shape (N, D), where N is the number of data points and D is the number of features.
+    max_clusters : int, optional
+        The maximum number of clusters to consider, defaults to 10.
+
+    Returns:
+    --------
+    best_labels : ndarray
+        The cluster labels for the best number of clusters.
+    best_model : GaussianMixture
+        The Gaussian mixture model with the best number of clusters.
+    """
+
+    # Compute log likelihood for different numbers of clusters
+    best_score = -np.inf
+    best_labels = None
+    best_model = None
+    for n in range(1, max_clusters + 1):
+        model = GaussianMixture(n, covariance_type='full')
+        model.fit(X)
+        labels = model.predict(X)
+        score = model.score(X)
+        if score > best_score:
+            best_score = score
+            best_labels = labels
+            best_model = model
+
+    return best_labels, best_model
+print(autoclass(X)[1].n_components
+      )'''
+      
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+import numpy as np
+def elbowrule(X):
+    k_values = range(1, 10)
+    inertias = []
+    for k in k_values:
+        kmeans = KMeans(n_clusters=k, random_state=42)
+        kmeans.fit(X)
+        inertias.append(kmeans.inertia_)
+
+    # Plot elbow curve
+    plt.plot(k_values, inertias, 'bx-')
+    plt.xlabel('Number of clusters (k)')
+    plt.ylabel('Inertia')
+    plt.title('Elbow Method For Optimal k')
+    plt.show()
+
+print(autoclass(X))
+print(elbowrule(X))
